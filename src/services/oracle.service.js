@@ -1,7 +1,8 @@
 const oracledb = require("oracledb");
 
 // indica para usar o modo Thick
-oracledb.initOracleClient({ libDir: 'C:\\instantclient_23_7' });
+// oracledb.initOracleClient({ libDir: 'C:\\instantclient_23_7' });
+oracledb.initOracleClient({ libDir: "/opt/oracle/instantclient_21_11" });
 
 let pool;
 
