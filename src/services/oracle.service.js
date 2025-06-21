@@ -1,48 +1,68 @@
-// src/services/oracle.service.js
-const getConnection = require('../config/oracle');
+const oracledb = require("oracledb");
 
-// Comandos potencialmente perigosos que não queremos permitir
-const blockedKeywords = ['DROP', 'TRUNCATE', 'DELETE FROM', '--', '/*', '*/', 'ALTER'];
+// indica para usar o modo Thick
+oracledb.initOracleClient({ libDir: 'C:\\instantclient_23_7' });
 
-const isQuerySafe = (sql) => {
-  const upperSql = sql.toUpperCase();
-  return !blockedKeywords.some(keyword => upperSql.includes(keyword));
-};
+let pool;
 
-const executeQuery = async (sql, params = []) => {
-  if (!isQuerySafe(sql)) {
-    throw new Error("Query bloqueada por segurança.");
+async function initPool() {
+  if (!pool) {
+    pool = await oracledb.createPool({
+      user: process.env.DB_USER,
+      password: process.env.DB_PASS,
+      connectString: process.env.DB_CONNECT_STRING,
+      poolMin: 1,
+      poolMax: 10,
+      poolIncrement: 1,
+    });
   }
+}
 
-  let conn;
+async function executeQuery(sql, params = {}) {
+  await initPool();
+  let connection;
+
   try {
-    conn = await getConnection();
-    const result = await conn.execute(sql, params);
+    connection = await pool.getConnection();
+
+    const result = await connection.execute(sql, params, {
+      outFormat: oracledb.OUT_FORMAT_OBJECT,
+      autoCommit: false, // só commit em updates
+    });
+
     return result.rows;
-  } catch (err) {
-    console.error("[Oracle Query Error]", err);
-    throw err;
   } finally {
-    if (conn) await conn.close();
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (e) {
+        console.error("Erro ao fechar conexão:", e);
+      }
+    }
   }
-};
+}
 
-const executeUpdate = async (sql, params = []) => {
-  if (!isQuerySafe(sql)) {
-    throw new Error("Query bloqueada por segurança.");
-  }
+async function executeUpdate(sql, params = {}) {
+  await initPool();
+  let connection;
 
-  let conn;
   try {
-    conn = await getConnection();
-    const result = await conn.execute(sql, params, { autoCommit: true });
-    return result.rowsAffected;
-  } catch (err) {
-    console.error("[Oracle Update Error]", err);
-    throw err;
+    connection = await pool.getConnection();
+
+    const result = await connection.execute(sql, params, {
+      autoCommit: true, // commit automático em update/insert/delete
+    });
+
+    return result.rowsAffected; // número de linhas afetadas
   } finally {
-    if (conn) await conn.close();
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (e) {
+        console.error("Erro ao fechar conexão:", e);
+      }
+    }
   }
-};
+}
 
 module.exports = { executeQuery, executeUpdate };

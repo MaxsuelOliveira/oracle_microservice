@@ -1,14 +1,11 @@
+// src/config/oracle.js
 const oracledb = require('oracledb');
 require('dotenv').config();
 
-try {
-  oracledb.initOracleClient({ libDir: '/opt/oracle/instantclient_21_11' });
-  console.log('[OracleDB] Modo Thick ativado no Docker');
-} catch (err) {
-  console.error('[OracleDB] Erro ao iniciar modo Thick:', err);
-}
-
 oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
+
+// Ativa o modo thick
+oracledb.initOracleClient({ libDir: 'C:\\instantclient_23_7' }); // Altere para seu caminho real
 
 const getConnection = async () => {
   try {

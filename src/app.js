@@ -10,7 +10,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.status(200).json({ message: "Bem-vindo ao microserviço Oracle DB!" });
+  res.status(200).json({ message: "Welcome to the Oracle DB microservice!" });
 });
 
 // Rotas

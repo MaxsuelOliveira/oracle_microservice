@@ -1,0 +1,1 @@
+C:\instantclient_23_7
